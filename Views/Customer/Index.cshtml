@@ -1,0 +1,145 @@
+﻿@model ViewModels
+@{ ViewData["Title"] = "Home Page"; }
+<div class="text-center">
+    <h1 class="display-4">Welcome</h1>
+    <h5 id="balance">Balance:</h5>
+</div>
+<div class="container">
+    <div class="row">
+        <div class="col-md">
+            <div class="row">
+                <div class="container-fluid col-8">
+                    @foreach (var item in Model.NewsIndexViewModel.News)
+                    {
+                      <div class="card mt-2" id="drink-@item.Id">
+                      @if (item.PosterUrl != null && item.PosterUrl != string.Empty&&item.Quantity!=0)
+                       {
+                         <img src="@item.PosterUrl" class="card-img-top" id="drinkImg-@item.Id">
+                       }
+                      @if (item.Quantity==0)
+                          {
+
+                            <img src="/82-829617_sold-out-stock-photography.png" class="card-img-top">
+                          }
+                     <div class="card-body">
+                         <h5 class="card-title">@item.Title</h5>
+                         <p class="card-text">Price :@item.Price</p>
+                         <p class="card-text">Quantity :@item.Quantity</p>
+                         <p class="card-text">Content: @item.Content</p>
+                         <p class="card-text" id="card-quantity-@item.Id">@item.Quantity</p>
+                    
+                     </div>
+                     </div>
+                     }
+                </div>
+            </div>
+        </div>
+        <div class="col-md">
+            <div class="row" id="coinrow">
+                <div class="container-fluid col-8" id="coin_card">
+                    @foreach (var item in Model.CoinViewModel.Coins)
+                    {
+                     <div class="card mt-2" id="card-@item.Id">
+                          @if (item.ImageUrl != null && item.ImageUrl != string.Empty&& item.Quantity != 0)
+                          {
+                              <img src="@item.ImageUrl" id="image-@item.Id" class="card-img-top">
+                              <div class="card-body">
+                                  <h5 class="card-title">@item.Value</h5>
+                                  <h5 class="card-title" id="coin-quantity-@item.Id">Quantity: @item.Quantity</h5>
+                              </div>
+                          }
+                          @if (item.Quantity==0)
+                          {
+                              <img src="/png-clipart-logo-brand-product-trademark-font-not-found-logo-brand.png" class="card-img-top">
+                          }
+                         
+                     </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts{
+    <script>
+
+        let totalBalance = 0;
+
+
+        sourcearrayCoins = @Json.Serialize(Model.CoinViewModel.Coins);
+
+
+        for (let i = 0; i < sourcearrayCoins.length; i++) {
+            $(`#card-${sourcearrayCoins[i].id}`).click(function () {
+                if (sourcearrayCoins[i].quantity <= 0) {
+                    $(`#image`).attr("src","/png-clipart-logo-brand-product-trademark-font-not-found-logo-brand.png")
+
+                }
+                else {
+                    sourcearrayCoins[i].quantity -= 1
+                    if (sourcearrayCoins[i].quantity <= 0) {
+                        $(`#image-${sourcearrayCoins[i].id}`).attr("src", "/png-clipart-logo-brand-product-trademark-font-not-found-logo-brand.png")
+
+                    }
+                    totalBalance += sourcearrayCoins[i].value
+                    $(`#coin-quantity-${sourcearrayCoins[i].id}`).html("Quantity: " +sourcearrayCoins[i].quantity)
+                    $("#balance").html('Balance:' + totalBalance)
+
+
+                    $.ajax({
+                        type: "GET",
+                        url: '@Url.ActionLink("EditCoin", "Customer")',
+                        data: {
+                            Id: sourcearrayCoins[i].id,
+                            Value: sourcearrayCoins[i].value,
+                            Quantity: sourcearrayCoins[i].quantity,
+                            ImageUrl: sourcearrayCoins[i].imageUrl
+                        }
+                    });
+
+
+                }
+            });
+        }
+
+        sourcearrayDrinks = @Json.Serialize(Model.NewsIndexViewModel.News);
+
+        for (let i = 0; i < sourcearrayDrinks.length; i++) {
+            $(`#drink-${sourcearrayDrinks[i].id}`).click(function () {
+                if (sourcearrayDrinks[i].price > totalBalance) {
+                    alert("Not Enough Money");
+                }
+                else if (sourcearrayDrinks[i].quantity <= 0)
+                {
+                    alert("Out of stock");
+                }
+                else {
+                    sourcearrayDrinks[i].quantity -= 1
+                    if (sourcearrayDrinks[i].quantity <= 0) {
+                        $(`#drinkImg-${sourcearrayDrinks[i].id}`).attr("src", "/82-829617_sold-out-stock-photography.png")
+
+                    }
+                    totalBalance -= sourcearrayDrinks[i].price
+                    $(`#card-quantity-${sourcearrayDrinks[i].id}`).html( sourcearrayDrinks[i].quantity)
+                    $("#balance").html('Balance:' + totalBalance)
+
+                     $.ajax({
+                        type: "GET",
+                        url: '@Url.ActionLink("Edit", "Customer")',
+                         data: {
+                             Id: sourcearrayDrinks[i].id,
+                             Quantity: sourcearrayDrinks[i].quantity,
+                             PosterUrl: sourcearrayDrinks[i].posterUrl,
+                             CategoryId: sourcearrayDrinks[i].categoryId,
+                             Content: sourcearrayDrinks[i].content,
+                             Date: sourcearrayDrinks[i].date,
+                             Price: sourcearrayDrinks[i].price,
+                             Title: sourcearrayDrinks[i].title
+                         }
+                    });
+                }
+            });
+        }
+
+    </script>
+}
